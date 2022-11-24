@@ -192,7 +192,7 @@ class DDPM(nn.Module):
 
 
 ### Debuging the network
-@utils.register_model(name='ddpm_debugging')
+# @utils.register_model(name='ddpm_debugging')
 class DDPM_features(nn.Module):
     """ The DDPM network implements a U-Net based on a Wide ResNet
         with weight normalization using group normalization.
