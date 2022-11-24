@@ -19,7 +19,7 @@ get_normalization = layers.get_normalization
 default_initializer = layers.default_init
 
 
-@utils.register_model(name='ddpm')
+# @utils.register_model(name='ddpm')
 class DDPM(nn.Module):
     """ The DDPM network implements a U-Net based on a Wide ResNet
         with weight normalization using group normalization.
