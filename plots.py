@@ -5,8 +5,16 @@ import matplotlib.pyplot as plt
 from torchvision.utils import make_grid
 
 
-def save_image(batch_images, workdir, n=64, padding=2, pos="horizontal", w=5.5, file_format="png", name="data_samples",  scale=4, show=False):
-    
+def save_image(batch_images, workdir, n=64, padding=2, pos="horizontal", w=5.5, file_format="png", name="data_samples", scale=4, show=False):
+    """ Plot a grid of images for a given size
+    Args
+        batch_images: tensor of size NxCxHxW
+        workdir: path where image grid will be saved
+        n: number of images to display
+        padding: padding size of the grid
+        pos: if "horizontal" grid will be display in a single row, otherwise will create a matrix
+        w: width size
+    """
     if pos=="horizontal":
         sample_grid = make_grid(batch_images[:n], nrow=n, padding=padding)
     else:
