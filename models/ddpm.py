@@ -33,7 +33,7 @@ class DDPM(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.act = act = get_act(config)
-        self.register_buffer('sigmas', torch.tensor(utils.get_sigmas(config)))
+        # self.register_buffer('sigmas', torch.tensor(utils.get_sigmas(config)))
 
         self.nf = nf = config.model.nf
         ch_mult = config.model.ch_mult
