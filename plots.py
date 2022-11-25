@@ -50,7 +50,7 @@ def prepare_grid(batch, denoise_batch, inverse_scaler, grid_size=36):
         inverse_scaler: scaling function
         grid_size: size of the grid
     """
-    assert(np.sqrt(grid_size) % 1== 0, "This function only plots images with a grid_size of nxn")
+    assert np.sqrt(grid_size) % 1 == 0, "This function only plots images with a grid_size of nxn"
     B, C, H, W = batch.shape
     nrow = int(np.sqrt(grid_size))
     n=nrow**2//2
