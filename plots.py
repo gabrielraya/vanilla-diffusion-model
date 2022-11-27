@@ -1,8 +1,14 @@
 import os
 import torch
+import imageio
+import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 from torchvision.utils import make_grid
+import matplotlib
+import seaborn as sns
+matplotlib.rcParams['pdf.fonttype'] = 42
+sns.set_theme()
 
 
 def save_image(batch_images, workdir, n=64, padding=2, pos="horizontal", w=5.5, file_format="png", name="data_samples", scale=4, show=False):
@@ -71,3 +77,17 @@ def prepare_grid(batch, denoise_batch, inverse_scaler, grid_size=36):
             j+=1
 
     return torch.cat(a).reshape(grid_size, C, H, W)
+
+
+
+def draw_gif(name, figs_dir, glob_str, duration=.5):
+    """
+    Create a gif to visualize progress in the VAE
+    :param name: save the file using this name
+    :param figs_dir: path to save file
+    :param glob_str: name pattern of the images to use
+    :return: image gif
+    """
+    files = [file for file in pathlib.Path(figs_dir).glob(glob_str)]
+    images = [imageio.imread(str(file)) for file in sorted(files)]
+    imageio.mimsave('{}/{}'.format(figs_dir, name), images, duration=duration)
