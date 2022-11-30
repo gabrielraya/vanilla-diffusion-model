@@ -1,3 +1,10 @@
+# Testing
+*results
+
+# Data
+*data
+*~
+
 # Ignore IDE specific files
 .idea/**
 

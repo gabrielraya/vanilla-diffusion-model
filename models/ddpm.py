@@ -19,7 +19,7 @@ get_normalization = layers.get_normalization
 default_initializer = layers.default_init
 
 
-# @utils.register_model(name='ddpm')
+@utils.register_model(name='ddpm')
 class DDPM(nn.Module):
     """ The DDPM network implements a U-Net based on a Wide ResNet
         with weight normalization using group normalization.
@@ -33,7 +33,7 @@ class DDPM(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.act = act = get_act(config)
-        # self.register_buffer('sigmas', torch.tensor(utils.get_sigmas(config)))
+        # self.register_buffer('sigmas', torch.tensor(utils.get_sigmas(configs)))
 
         self.nf = nf = config.model.nf
         ch_mult = config.model.ch_mult
