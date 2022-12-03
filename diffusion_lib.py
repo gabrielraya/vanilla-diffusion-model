@@ -30,6 +30,11 @@ class DiffusionProcess(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def forward_step(self, x, t):
+        """return sample x_t ~ q(x_t|x_{t-1})"""
+        pass
+
+    @abc.abstractmethod
     def t_step_transition_prob(self, x, t):
         """Computes the the t-step forward distribution q(x_t|x_0) """
         pass
@@ -75,6 +80,17 @@ class GaussianDiffusion(DiffusionProcess):
         mean = torch.sqrt(1 - beta[:, None, None, None].to(x.device)) * x
         std = torch.sqrt(beta)
         return mean, std
+
+    def forward_step(self, x, t):
+        """return sample x_t ~ q(x_t|x_{t-1})
+        Args:
+            x : tensor NxCxHxW in range [-1,1]
+            t: 1D tensor of size N
+        """
+        mean, std = self.transition_prob(x, t)
+        z = torch.randn_like(x)
+        x = mean + std[:, None, None, None]*z
+        return x, z
 
     def t_step_transition_prob(self, x, t):
         """Computes the the t-step forward distribution q(x_t|x_0)
