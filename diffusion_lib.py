@@ -40,6 +40,11 @@ class DiffusionProcess(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def t_forward_steps(self, x, t):
+        """return sample x_t ~ q(x_t|x_{t-1})"""
+        pass
+
+    @abc.abstractmethod
     def prior_sampling(self, shape):
         """Generate one sample from the prior distribution, $p_T(x)$."""
         pass
@@ -99,6 +104,15 @@ class GaussianDiffusion(DiffusionProcess):
         mean = self.sqrt_alphas_cumprod.to(x.device)[t, None, None, None] * x
         std  = self.sqrt_1m_alphas_cumprod.to(x.device)[t]
         return mean, std
+
+    def t_forward_steps(self, x, t):
+        """return sample x_t ~ q(x_t|x_0)
+        Basically reparemeterize the t-step distribution
+        """
+        mean, std = self.t_step_transition_prob(x, t)
+        z = torch.randn_like(x)
+        x_t = mean + std[:, None, None, None]*z
+        return x_t, z
 
     def prior_sampling(self, shape):
         return torch.randn(*shape)
