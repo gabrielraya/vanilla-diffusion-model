@@ -142,7 +142,7 @@ def evaluate(config,
                           config.data.num_channels,
                           config.data.image_size,
                           config.data.image_size)
-        sampling_fn = sampling.sampling_fn(config, diffusion, noise_model, sampling_shape, inverse_scaler, denoise=True)
+        # sampling_fn = sampling.sampling_fn(config, diffusion, noise_model, sampling_shape, inverse_scaler, denoise=True)
 
     begin_ckpt = config.eval.begin_ckpt
     logging.info("Evaluation checkpoint: %d" % (begin_ckpt,))
@@ -172,7 +172,7 @@ def evaluate(config,
 
     # Generate and save samples
     logging.info("Generating samples")
-    samples = sampling_fn(noise_model)
+    samples = sampling.sampling_fn(noise_model)
     samples = torch.clip(samples * 255, 0, 255).int()
     logging.info("Saving generated samples at {}".format(eval_dir))
     plts.save_image(samples, eval_dir, n=config.sampling.grid_size, pos="vertical", padding=0,
