@@ -1,9 +1,9 @@
 """
     TRAINING AND EVALUATION FOR DIFFUSION MODELS
 """
-
 import os
 import torch
+import logging
 from torch.utils import tensorboard
 
 
@@ -13,6 +13,8 @@ import plots as plts
 import models.utils as mutils
 from models.ema import ExponentialMovingAverage
 from utils import restore_checkpoint
+from diffusion_lib import GaussianDiffusion
+import sampling as sampling
 
 
 def train(config, workdir):
@@ -65,3 +67,33 @@ def train(config, workdir):
     batch = scaler(batch)
     batch = inverse_scaler(batch)
     plts.save_image(batch, workdir, pos="vertical", name="data_samples")
+
+    # Set uo the Forward diffusion process
+    diffusion = GaussianDiffusion(config.model.beta_min, config.model.beta_max, T=1000)  # defines the diffusion process
+
+    # Build one-step training and evaluation functions
+    optimize_fn = losses.optimization_manager(config)
+
+    train_step_fn = losses.get_step_fn(diffusion, train=True, optimize_fn=optimize_fn)
+    eval_step_fn = losses.get_step_fn(diffusion, train=False, optimize_fn=optimize_fn)
+
+    # Building sampling functions
+    if config.training.snapshot_sampling:
+        sampling_shape = (config.training.batch_size, config.data.num_channels,
+                          config.data.image_size, config.data.image_size)
+        sampling_fn = sampling.get_sampling_fn(config, diffusion, sampling_shape, inverse_scaler)
+
+    num_train_steps = config.training.n_iters
+
+    # In case there are multiple hosts (e.g., TPU pods), only log to host 0
+    logging.info("Starting training loop at step %d." % (initial_step, ))
+
+
+    # Generate and save samples
+    logging.info("Generating samples of grid_size = 20x20")
+    samples, n = sampling_fn(noise_model)
+    samples = torch.clip(samples * 255, 0, 255).int()
+    logging.info("Saving generated samples at {}".format(workdir))
+    plts.save_image(samples, workdir, n=64, pos="vertical", padding=1, w=22, scale=64,
+                    name="{}_{}_data_samples_20x20".format(config.model.name, config.data.dataset.lower()))
+
