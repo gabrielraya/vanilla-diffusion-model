@@ -135,7 +135,7 @@ def sampling_fn(config, diffusion, model, shape, inverse_scaler, denoise=True):
 
         for i in tqdm(range(diffusion.N)):
             t = torch.ones(shape[0], device=config.device) * timesteps[i]
-            x, x_mean = sampler.denoise_update_fn(x, t, model=model)
+            x, x_mean = sampler.denoise_update_fn(x, t)
 
         return inverse_scaler(x_mean if denoise else x)
 
