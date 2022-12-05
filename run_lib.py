@@ -91,7 +91,7 @@ def train(config, workdir):
 
     # Generate and save samples
     logging.info("Generating samples of grid_size = 20x20")
-    samples, n = sampling_fn(noise_model)
+    samples = sampling_fn(noise_model)
     samples = torch.clip(samples * 255, 0, 255).int()
     logging.info("Saving generated samples at {}".format(workdir))
     plts.save_image(samples, workdir, n=64, pos="vertical", padding=1, w=22, scale=64,

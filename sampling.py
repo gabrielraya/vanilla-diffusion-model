@@ -5,6 +5,7 @@ import torch
 import numpy as np
 import abc
 import functools
+from tqdm import tqdm
 
 from models import utils as mutils
 
@@ -122,7 +123,7 @@ class AncestralSampling(Sampler):
 def shared_denoise_update_fn(x, t, diffusion, model, sampler):
     """A wrapper that configures and returns the update function of samplers."""
 
-    model_fn = mutils.get_model_fn(diffusion, model, train=False)
+    model_fn = mutils.get_model_fn(model, train=False)
     sampler_obj = sampler(diffusion, model_fn)
     return sampler_obj.update_fn(x, t)
 
@@ -163,7 +164,7 @@ def get_sampling_fn(config, diffusion, shape, inverse_scaler, denoise=True):
             # reverse time partition [T, 0]
             timesteps = torch.flip(torch.arange(0, diffusion.T, device=config.device), dims=(0,))
 
-            for i in range(diffusion.N):
+            for i in tqdm(range(diffusion.N)):
                 t = torch.ones(shape[0], device=config.device) * timesteps[i]
                 x, x_mean = denoise_update_fn(x, t, model=model)
 
