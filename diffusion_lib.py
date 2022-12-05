@@ -76,7 +76,6 @@ class GaussianDiffusion(DiffusionProcess):
     def transition_prob(self, x, timestep):
         """"Forward step as a result of the forward transition distribution q(x_t|x_t-1)
             q(x_t|x_{t-1}) = N(x_t|\sqrt{1-beta_t}x_{t-1}, \beta_t*I)
-
         Args:
             x : tensor NxCxHxW in range [-1,1]
             timestep: 1D tensor of size N [1,2,..., T]
@@ -88,6 +87,7 @@ class GaussianDiffusion(DiffusionProcess):
 
     def forward_step(self, x, t):
         """return sample x_t ~ q(x_t|x_{t-1})
+          x_t = \sqrt{1-beta_t}x_{t-1} + \sqrt{\beta_t} * z ; z~N(0,I)
         Args:
             x : tensor NxCxHxW in range [-1,1]
             t: 1D tensor of size N
@@ -108,6 +108,7 @@ class GaussianDiffusion(DiffusionProcess):
     def t_forward_steps(self, x, t):
         """return sample x_t ~ q(x_t|x_0)
         Basically reparemeterize the t-step distribution
+        x_t = sqrt{\bar{\alpha_t}}x_0 + \sqrt{(1-\bar{\alpha_t})} * z; z \sim  z~N(0,I)
         """
         mean, std = self.t_step_transition_prob(x, t)
         z = torch.randn_like(x)
