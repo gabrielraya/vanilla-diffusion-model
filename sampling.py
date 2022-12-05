@@ -6,6 +6,7 @@ import numpy as np
 import abc
 import functools
 from tqdm import tqdm
+import logging
 
 from models import utils as mutils
 
@@ -120,54 +121,22 @@ class AncestralSampling(Sampler):
         return self.denoise_update_fn(x, t)
 
 
-def shared_denoise_update_fn(x, t, diffusion, model, sampler):
-    """A wrapper that configures and returns the update function of samplers."""
-
+def sampling_fn(config, diffusion, model, shape, inverse_scaler, denoise=True):
+    # get noise predictor model in evaluation mode
     model_fn = mutils.get_model_fn(model, train=False)
-    sampler_obj = sampler(diffusion, model_fn)
-    return sampler_obj.update_fn(x, t)
+    sampler_method = get_sampler(config.sampling.sampler.lower())
+    sampler = sampler_method(diffusion, model_fn)
+
+    with torch.no_grad():
+        # Initial sample - sampling from tractable prior
+        x = diffusion.prior_sampling(shape).to(config.device)
+        # reverse time partition [T, 0]
+        timesteps = torch.flip(torch.arange(0, diffusion.T, device=config.device), dims=(0,))
+
+        for i in tqdm(range(diffusion.N)):
+            t = torch.ones(shape[0], device=config.device) * timesteps[i]
+            x, x_mean = sampler.denoise_update_fn(x, t, model=model)
+
+        return inverse_scaler(x_mean if denoise else x)
 
 
-def get_sampling_fn(config, diffusion, shape, inverse_scaler, denoise=True):
-    """Create a sampling function.
-
-    Args:
-        config: A `ml_collections.ConfigDict` object that contains all configuration information.
-        diffusion: A `sde_lib.SDE` object that represents the forward SDE.
-        shape: A sequence of integers representing the expected shape of a single sample.
-        inverse_scaler: The inverse data normalizer function.
-        denoise: If `True`, add one-step denoising to the final samples.
-
-    Returns:
-        A function that takes random states and a replicated training state
-        and outputs samples with the training dimensions matching `shape`.
-    """
-
-    sampler = get_sampler(config.sampling.sampler.lower())
-
-    denoise_update_fn = functools.partial(shared_denoise_update_fn,
-                                          diffusion=diffusion,
-                                          sampler=sampler)
-
-    def sampling_fn(model):
-        """"The sampling function.
-
-        Args:
-            model: A noise prediction model.
-
-        Returns:
-            Samples, number of function evaluations.
-        """
-        with torch.no_grad():
-            # Initial sample - sampling from tractable prior
-            x = diffusion.prior_sampling(shape).to(config.device)
-            # reverse time partition [T, 0]
-            timesteps = torch.flip(torch.arange(0, diffusion.T, device=config.device), dims=(0,))
-
-            for i in tqdm(range(diffusion.N)):
-                t = torch.ones(shape[0], device=config.device) * timesteps[i]
-                x, x_mean = denoise_update_fn(x, t, model=model)
-
-            return inverse_scaler(x_mean if denoise else x)
-
-    return sampling_fn
