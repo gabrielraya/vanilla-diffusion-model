@@ -172,32 +172,14 @@ def evaluate(config,
                           config.data.num_channels,
                           config.data.image_size,
                           config.data.image_size)
-        # sampling_fn = sampling.sampling_fn(config, diffusion, noise_model, sampling_shape, inverse_scaler, denoise=True)
 
-    begin_ckpt = config.eval.begin_ckpt
-    logging.info("Evaluation checkpoint: %d" % (begin_ckpt,))
-    for ckpt in range(begin_ckpt, config.eval.end_ckpt + 1):
-        # Wait if the target checkpoint doesn't exist yet
-        waiting_message_printed = False
-        ckpt_filename = os.path.join(checkpoint_dir, "checkpoint_{}.pth".format(ckpt))
-        while not os.path.exists(ckpt_filename):
-            if not waiting_message_printed:
-                logging.warning("Waiting for the arrival of checkpoint_%d" % (ckpt,))
-                waiting_message_printed = True
-
+    ckpt = config.eval.checkpoint
+    logging.info("Evaluation checkpoint: %d" % (ckpt))
+    ckpt_filename = os.path.join(checkpoint_dir, "checkpoint_{}.pth".format(ckpt))
     logging.info("Evaluation checkpoint file: " +  ckpt_filename)
-
-    # Wait for 2 additional mins in case the file exists but is not ready for reading
     ckpt_path = os.path.join(checkpoint_dir, f'checkpoint_{ckpt}.pth')
-    try:
-        state = restore_checkpoint(ckpt_path, state, device=config.device)
-    except:
-        time.sleep(60)
-        try:
-            state = restore_checkpoint(ckpt_path, state, device=config.device)
-        except:
-            time.sleep(120)
-            state = restore_checkpoint(ckpt_path, state, device=config.device)
+    state = restore_checkpoint(ckpt_path, state, device=config.device)
+
     ema.copy_to(noise_model.parameters())
 
     # Generate and save samples
