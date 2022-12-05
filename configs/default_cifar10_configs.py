@@ -15,6 +15,7 @@ def get_default_configs():
   training.snapshot_freq_for_preemption = 10000
   ## produce samples at each snapshot.
   training.snapshot_sampling = True
+  training.sampling_size = 64
 
   # sampling
   config.sampling = sampling = ml_collections.ConfigDict()

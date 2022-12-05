@@ -8,8 +8,6 @@ def get_config():
 
   # training
   training = config.training
-  training.sde = 'vpsde'
-  training.continuous = False
   training.reduce_mean = True
 
   # sampling
