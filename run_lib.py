@@ -77,11 +77,7 @@ def train(config, workdir):
     train_step_fn = losses.get_step_fn(diffusion, train=True, optimize_fn=optimize_fn)
     eval_step_fn = losses.get_step_fn(diffusion, train=False, optimize_fn=optimize_fn)
 
-    # Building sampling functions
-    if config.training.snapshot_sampling:
-        sampling_shape = (config.training.batch_size, config.data.num_channels,
-                          config.data.image_size, config.data.image_size)
-        sampling_fn = sampling.get_sampling_fn(config, diffusion, sampling_shape, inverse_scaler)
+
 
     num_train_steps = config.training.n_iters
 
@@ -89,11 +85,16 @@ def train(config, workdir):
     logging.info("Starting training loop at step %d." % (initial_step, ))
 
 
+    # Building sampling functions
+    if config.training.snapshot_sampling:
+        sampling_shape = (64, config.data.num_channels,
+                          config.data.image_size, config.data.image_size)
+        # sampling_fn = sampling.get_sampling_fn(config, diffusion, sampling_shape, inverse_scaler)
+
     # Generate and save samples
     logging.info("Generating samples of grid_size = 20x20")
-    samples = sampling_fn(noise_model)
-    samples = torch.clip(samples * 255, 0, 255).int()
+    samples = sampling.sampling_fn(config, diffusion, noise_model, sampling_shape, inverse_scaler, denoise=True)
     logging.info("Saving generated samples at {}".format(workdir))
-    plts.save_image(samples, workdir, n=64, pos="vertical", padding=1, w=22, scale=64,
+    plts.save_image(samples.clamp(0,1), workdir, n=64, pos="vertical", padding=1, w=22, scale=64,
                     name="{}_{}_data_samples_20x20".format(config.model.name, config.data.dataset.lower()))
 
