@@ -122,8 +122,7 @@ class AncestralSampling(Sampler):
 
 
 def sampling_fn(config, diffusion, model, shape, inverse_scaler, denoise=True):
-    # get noise predictor model in evaluation mode
-    model_fn = mutils.get_model_fn(model, train=False)
+    model_fn = mutils.get_model_fn(model, train=False)  # get noise predictor model in evaluation mode
     sampler_method = get_sampler(config.sampling.sampler.lower())
     sampler = sampler_method(diffusion, model_fn)
 
