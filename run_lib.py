@@ -125,10 +125,9 @@ def train(config, workdir):
                 ema.restore(noise_model.parameters())
                 this_sample_dir = os.path.join(sample_dir, "iter_{}".format(step))
                 os.makedirs(this_sample_dir, exist_ok=True)
-                sample = torch.clip(sample * 255, 0, 255).int()
-                torch.save(sample, os.path.join(this_sample_dir, "sample.pt"))
-                plts.save_image(sample, this_sample_dir, n=config.training.sampling_size, pos="vertical", name="sample")
-
+                samples = torch.clip(samples * 255, 0, 255).int()
+                torch.save(samples, os.path.join(this_sample_dir, "sample.pt"))
+                plts.save_image(samples, this_sample_dir, n=config.training.sampling_size, pos="vertical", name="sample")
 
 ###############
 def evaluate(config,
