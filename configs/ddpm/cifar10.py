@@ -14,9 +14,7 @@ def get_config():
 
   # sampling
   sampling = config.sampling
-  sampling.method = 'pc'
-  sampling.predictor = 'ancestral_sampling'
-  sampling.corrector = 'none'
+  sampling.sampler = 'ancestral_sampling'
 
   # data
   data = config.data
