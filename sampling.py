@@ -9,6 +9,8 @@ from tqdm import tqdm
 import logging
 
 from models import utils as mutils
+from models.utils import append_dims
+
 
 _SAMPLERS = {}
 
@@ -105,16 +107,17 @@ class AncestralSampling(Sampler):
 
     def denoise_update_fn(self, x, t):
         diffusion = self.diffusion
+        dims = x.ndim
 
         beta = diffusion.discrete_betas.to(t.device)[t.long()]
         std = diffusion.sqrt_1m_alphas_cumprod.to(t.device)[t.long()]
 
         predicted_noise = self.model_fn(x, t)  # set the model either for training or evaluation
-        score = - predicted_noise / std[:, None, None, None]
+        score = - predicted_noise / append_dims(std, x.ndim)
 
-        x_mean = (x + beta[:, None, None, None] * score) / torch.sqrt(1. - beta)[:, None, None, None]
+        x_mean = (x + append_dims(beta, x.ndim) * score) /  append_dims(torch.sqrt(1. - beta), x.ndim)
         noise = torch.randn_like(x)
-        x = x_mean + torch.sqrt(beta)[:, None, None, None] * noise
+        x = x_mean + append_dims(torch.sqrt(beta), x.ndim) * noise
         return x, x_mean
 
     def update_fn(self, x, t):
