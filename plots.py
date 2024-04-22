@@ -47,11 +47,11 @@ def show_image(x, workdir, name="image", h=6, w=5.5, show=False):
         plt.close(fig)
 
 
-def plot_2d(x, workdir, name="swiss_data", w=6, h=6, alpha=0.5, show=False):
+def plot_2d(x, workdir, name="swiss_data", w=6, h=6, xlim=2,alpha=0.5, show=False):
     fig = plt.figure(figsize=(w, h))
     plt.scatter(x[:, 0], x[:, 1], alpha=alpha)
-    plt.xlim(-2,2)
-    plt.ylim(-2,2)
+    plt.xlim(-xlim, xlim)
+    plt.ylim(-xlim, xlim)
     if not show:
         fig.savefig(os.path.join(workdir, "{}.png".format(name)), dpi=fig.dpi, bbox_inches='tight')
         plt.close(fig)
