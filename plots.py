@@ -8,7 +8,7 @@ from torchvision.utils import make_grid
 import matplotlib
 import seaborn as sns
 matplotlib.rcParams['pdf.fonttype'] = 42
-sns.set_theme()
+sns.set_theme(style="white")
 
 
 def save_image(batch_images, workdir, n=64, padding=2, pos="horizontal", w=5.5, file_format="png", name="data_samples", scale=4, show=False):
@@ -46,6 +46,17 @@ def show_image(x, workdir, name="image", h=6, w=5.5, show=False):
     if not show:
         plt.close(fig)
 
+
+def plot_2d(x, workdir, name="swiss_data", w=6, h=6, alpha=0.5, show=False):
+    fig = plt.figure(figsize=(w, h))
+    plt.scatter(x[:, 0], x[:, 1], alpha=alpha)
+    plt.xlim(-2,2)
+    plt.ylim(-2,2)
+    if not show:
+        fig.savefig(os.path.join(workdir, "{}.png".format(name)), dpi=fig.dpi, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
 
 def prepare_grid(batch, denoise_batch, inverse_scaler, grid_size=36):
     """ Construct grid to show denoise image next to original one

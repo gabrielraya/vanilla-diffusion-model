@@ -5,24 +5,25 @@ Abstract Class for the forward and reverse process.
 """
 import abc
 import torch
+from models.utils import append_dims
 
 
 class DiffusionProcess(abc.ABC):
-    """ Diffusion process abstract class. Functions are designed for a mini-batch of inputs """
+    """Abstract class for diffusion processes suitable for mini-batch inputs."""
 
-    def __init__(self, T):
-        """ Construct a Discrete Diffusion process.
+    def __init__(self, N: int) -> None:
+        """Initializes the diffusion process with a specified number of time steps.
 
-        Args:
-            N: number of time steps
-        """
+       Args:
+           N (int): Number of discrete time steps in the diffusion process.
+       """
         super().__init__()
-        self.N = T
+        self.N = N
 
     @property
     @abc.abstractmethod
     def T(self):
-        """End time of the DP."""
+        """End time of the DP. Useful when working with continuous-time diffusions"""
         pass
 
     @abc.abstractmethod
@@ -80,8 +81,10 @@ class GaussianDiffusion(DiffusionProcess):
             x : tensor NxCxHxW in range [-1,1]
             timestep: 1D tensor of size N [1,2,..., T]
         """
+        dims = x.ndim
         beta = self.discrete_betas.to(x.device)[timestep]
-        mean = torch.sqrt(1 - beta[:, None, None, None].to(x.device)) * x
+        # mean = torch.sqrt(1 - beta[:, None, None, None].to(x.device)) * x
+        mean = torch.sqrt(1 - append_dims(beta, dims).to(x.device)) * x
         std = torch.sqrt(beta)
         return mean, std
 
@@ -92,17 +95,22 @@ class GaussianDiffusion(DiffusionProcess):
             x : tensor NxCxHxW in range [-1,1]
             t: 1D tensor of size N
         """
+        dims = x.ndim
         mean, std = self.transition_prob(x, t)
         z = torch.randn_like(x)
-        x = mean + std[:, None, None, None]*z
+
+        # x = mean + std[:, None, None, None]*z
+        x = mean + append_dims(std, dims) * z
         return x, z
 
     def t_step_transition_prob(self, x, t):
         """Computes the the t-step forward distribution q(x_t|x_0)
             q(x_t|x_0) = \mathcal{N}(x_t; sqrt{\bar{\alpha_t}}x_0, (1-\bar{\alpha_t})I)
         """
-        mean = self.sqrt_alphas_cumprod.to(x.device)[t, None, None, None] * x
-        std  = self.sqrt_1m_alphas_cumprod.to(x.device)[t]
+        dims = x.ndim
+        # mean = self.sqrt_alphas_cumprod.to(x.device)[t, None, None, None] * x
+        mean = append_dims(self.sqrt_alphas_cumprod.to(x.device)[t], dims) * x
+        std = self.sqrt_1m_alphas_cumprod.to(x.device)[t]
         return mean, std
 
     def t_forward_steps(self, x, t):
@@ -110,10 +118,22 @@ class GaussianDiffusion(DiffusionProcess):
         Basically reparemeterize the t-step distribution
         x_t = sqrt{\bar{\alpha_t}}x_0 + \sqrt{(1-\bar{\alpha_t})} * z; z \sim  z~N(0,I)
         """
+        dims = x.ndim
         mean, std = self.t_step_transition_prob(x, t)
         z = torch.randn_like(x)
-        x_t = mean + std[:, None, None, None]*z
+        # x_t = mean + std[:, None, None, None]*z
+        x_t = mean + append_dims(std, dims) * z
         return x_t, z
 
     def prior_sampling(self, shape):
         return torch.randn(*shape)
+
+
+def append_dims(x, target_dims):
+    """Appends dimensions to the end of a tensor until it has target_dims dimensions."""
+    dims_to_append = target_dims - x.ndim
+    if dims_to_append < 0:
+        raise ValueError(
+            f"input has {x.ndim} dims but target_dims is {target_dims}, which is less"
+        )
+    return x[(...,) + (None,) * dims_to_append]
